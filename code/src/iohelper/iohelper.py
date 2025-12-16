@@ -1,5 +1,8 @@
+import json
 import uproot
 import awkward as ak
+from pathlib import Path
+from types import SimpleNamespace
 from uproot.interpretation.numerical import AsDtype
 
 
@@ -59,4 +62,64 @@ def load_tree(
             exclude_branch = [exclude_branch]
         selected -= set(exclude_branch)
 
-    return tree.arrays(list(selected), library="ak")
+    tree = tree.arrays(list(selected), library="ak")
+    tree = add_branch(tree=tree)
+    return tree
+
+
+def add_branch(tree: ak.Array) -> ak.Array:
+    """
+    为 Awkward Array 按需添加派生字段。
+    Parameters
+    ----------
+    tree : ak.Array
+        输入的 Awkward Array。
+
+    Returns
+    -------
+    ak.Array
+        添加派生字段后的 Awkward Array。
+    """
+    if "TRACK_PIDp2K" not in tree.fields:
+        tree["TRACK_PIDp2K"] = tree["TRACK_PIDp"] - tree["TRACK_PIDK"]
+    return tree
+
+
+def dict_to_namespace(d: dict) -> SimpleNamespace:
+    """
+    递归地将 dict 转换为 SimpleNamespace
+    """
+    ns = SimpleNamespace()
+    for k, v in d.items():
+        if isinstance(v, dict):
+            setattr(ns, k, dict_to_namespace(v))
+        else:
+            setattr(ns, k, v)
+    return ns
+
+
+def load_config(config_path: str | Path) -> SimpleNamespace:
+    """
+    从 JSON 文件加载配置并转换为 Namespace。
+
+    Parameters
+    ----------
+    config_path : str or Path
+        配置文件路径 (例如 config.json)
+
+    Returns
+    -------
+    cfg : SimpleNamespace
+        可通过属性访问的配置对象
+    """
+    config_path = Path(config_path)
+    with config_path.open("r") as f:
+        data = json.load(f)
+    return dict_to_namespace(data)
+
+
+def save_tree(tree: ak.Array, output_path: str):
+    """
+    将ak array储存为parquet文件
+    """
+    ak.to_parquet(tree, output_path)

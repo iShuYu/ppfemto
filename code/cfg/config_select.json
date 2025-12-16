@@ -1,0 +1,26 @@
+{
+    "EVENT": {
+        "nPVs": [
+            1,
+            1
+        ]
+    },
+    "TRACK": {
+        "TRACK_P": [
+            1e4,
+            1e9
+        ],
+        "TRACK_PT": [
+            4e2,
+            1e9
+        ],
+        "TRACK_PIDp": [
+            15,
+            1e9
+        ],
+        "TRACK_PIDp2K": [
+            5,
+            1e9
+        ]
+    }
+}

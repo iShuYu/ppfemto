@@ -1,0 +1,22 @@
+{
+    "data": {
+        "exclude_branch": [
+            "TRACK_RHO",
+            "TRACK_NVPHITS",
+            "TRACK_NUTHITS",
+            "TRACK_ETA",
+            "TRACK_BEAMPOCA_X",
+            "TRACK_BEAMPOCA_Y",
+            "TRACK_BEAMPOCA_Z",
+            "TRACK_BEAMPOCA_TX",
+            "TRACK_BEAMPOCA_TY",
+            "TRACK_PIDe",
+            "TRACK_PIDmu",
+            "TRACK_PROBNN_E",
+            "TRACK_PROBNN_K",
+            "TRACK_PROBNN_MU",
+            "TRACK_PROBNN_PI",
+            "TRACK_PROBNN_P"
+        ]
+    }
+}
