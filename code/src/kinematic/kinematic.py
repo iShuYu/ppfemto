@@ -16,7 +16,7 @@ def norm(v):
     ak.Array
         向量的模长，与输入向量在事件和元素维度上对齐。
     """
-    return ak.sqrt(v.px**2 + v.py**2 + v.pz**2)
+    return (v.px**2 + v.py**2 + v.pz**2) ** 0.5
 
 
 def dot(a, b):
@@ -55,4 +55,42 @@ def cos_theta(pairs):
         以避免浮点误差导致的数值不稳定。
     """
     ct = dot(pairs.a, pairs.b) / (norm(pairs.a) * norm(pairs.b))
-    return ak.clip(ct, -1.0, 1.0)
+    return ak.where(ct > 1, 1, ct)
+
+
+def kstar(pairs, m1: float = 938.272, m2: float = 938.272):
+    """
+    k*计算，根据两两配对后的结果计算
+
+    Parameters
+    ----------
+    pairs : ak.Array
+        将两个array combination之后的array
+        这两个array各自都包含质子的px, py, pz
+    m1, m2 : float
+        用于计算k*的两个粒子的质量，这里都是质子的质量
+
+    Returns
+    -------
+    ak.Array
+        两两配对计算的k*值
+    """
+    # energies
+    e1 = (m1**2 + pairs.a.px**2 + pairs.a.py**2 + pairs.a.pz**2) ** 0.5
+    e2 = (m2**2 + pairs.b.px**2 + pairs.b.py**2 + pairs.b.pz**2) ** 0.5
+
+    # q_inv = (p1 - p2)^2
+    qinv = (
+        (pairs.a.px - pairs.b.px) ** 2
+        + (pairs.a.py - pairs.b.py) ** 2
+        + (pairs.a.pz - pairs.b.pz) ** 2
+        - (e1 - e2) ** 2
+    )
+
+    # w = (qinv + m1^2 + m2^2) / 2
+    w = (qinv + m1**2 + m2**2) / 2.0
+
+    # k*
+    k = ((w**2 - m1**2 * m2**2) / (2.0 * w + m1**2 + m2**2)) ** 0.5
+
+    return k

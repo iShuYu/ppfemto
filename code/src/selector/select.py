@@ -1,3 +1,4 @@
+import numpy as np
 import awkward as ak
 from iohelper import *
 
@@ -124,6 +125,25 @@ def apply_track_mask_by_prefix(tree: ak.Array, mask: ak.Array, prefix="TRACK"):
     return ak.zip(out, depth_limit=1)
 
 
+def unique_event(tree, key: str = "EVENTNUMBER"):
+    """
+    按 event-level 的 key 去重，只保留第一次出现的 event
+
+    Parameters:
+    ----------
+    tree:
+        需要筛选的ak.Array
+    key:
+        根据哪一个branch的unique进行筛选，默认使用EVENTNUMBER
+    """
+    ev = tree[key]
+    ev_np = ak.to_numpy(ev)
+    _, first_idx = np.unique(ev_np, return_index=True)
+    first_idx = np.sort(first_idx)
+
+    return tree[first_idx]
+
+
 def reduce_raw(input_path, tree_path, cfg_select_path, cfg_io_path, output_path):
     """
     将一个未经处理的root文件，根据cfg_select.json里记录的筛选条件提取出有用的部分
@@ -166,6 +186,9 @@ def reduce_raw(input_path, tree_path, cfg_select_path, cfg_io_path, output_path)
 
     # select event with at least two proton
     tree = tree[ak.num(tree["TRACK_P"], axis=1) >= 2]
+
+    # delete duplicate events
+    tree = unique_event(tree)
 
     # ---------------- optional: 写出 ----------------
     # 如果你是写 root / parquet / npz，这里换成你自己的 writer
