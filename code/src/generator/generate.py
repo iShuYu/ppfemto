@@ -64,9 +64,16 @@ def generate(
     for i in range(1, mixing_time + 1):
         mixing_pair = gen_mixed_pair(X, shuffle=i)
         kstar_mix = kstar(mixing_pair, m1=m1, m2=m2)
+        cos_angle_mix = cos_theta(mixing_pair)
 
-        out_path = os.path.join(
+        out_kstar_path = os.path.join(
             output_mix_kstar_dir,
             f"kstar_mix{i}.parquet",
         )
-        ak.to_parquet(kstar_mix, out_path)
+        ak.to_parquet(kstar_mix, out_kstar_path)
+
+        out_costheta_path = os.path.join(
+            output_mix_kstar_dir,
+            f"costheta_mix{i}.parquet",
+        )
+        ak.to_parquet(cos_angle_mix, out_costheta_path)
