@@ -28,6 +28,12 @@
         ],
         "tree_path": "D02kpi/DecayTree",
         "reduced_path": "/st0/lhcb/kangye/ppfemto/reduced",
+        "output_dir": "/st0/lhcb/kangye/ppfemto/kstar",
         "numCPU": 20
+    },
+    "kstar_info": {
+        "m1": 938.272,
+        "m2": 938.272,
+        "mixing_time": 20
     }
 }
