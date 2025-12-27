@@ -67,7 +67,7 @@ def load_tree(
     return tree
 
 
-def add_branch(tree: ak.Array) -> ak.Array:
+def add_branch(tree: ak.Array, mother: str = "D0") -> ak.Array:
     """
     为 Awkward Array 按需添加派生字段。
     Parameters
@@ -82,6 +82,24 @@ def add_branch(tree: ak.Array) -> ak.Array:
     """
     if "TRACK_PIDp2K" not in tree.fields:
         tree["TRACK_PIDp2K"] = tree["TRACK_PIDp"] - tree["TRACK_PIDK"]
+
+    if "ETA_PHI_GHOST" not in tree.fields:
+        tree["ETA_PHI_GHOST"] = (
+            1e6 * tree["TRACK_ETA"]
+            + 1e6 * abs(tree["TRACK_PHI"])
+            + tree["TRACK_GHOSTPROB"]
+        )
+
+    # PVNTRACKS这个变量需要自己构建，故 or True
+    if ("PVNTRACKS" not in tree.fields) or True:
+        tree["PVNTRACKS"] = (tree["PVCHI2"] / tree["PVCHI2DOF"] + 3) / 2
+
+    # tracks的z坐标距离D0粒子的z坐标足够近的，它们为同源粒子
+    if "TRACK_Z_to_PARTICLE_Z" not in tree.fields:
+        tree["TRACK_Z_to_PARTICLE_Z"] = (
+            tree[f"{mother}_OWNPV_Z"] - tree["TRACK_OWNPV_Z"]
+        )
+
     return tree
 
 

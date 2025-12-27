@@ -1,6 +1,7 @@
 import numpy as np
 import awkward as ak
 from iohelper import *
+from kinematic import *
 
 
 def event_mask(arr, cfg, block):
@@ -144,7 +145,15 @@ def unique_event(tree, key: str = "EVENTNUMBER"):
     return tree[first_idx]
 
 
-def reduce_raw(input_path, tree_path, cfg_select_path, cfg_io_path, output_path):
+def reduce_raw(
+    input_path,
+    tree_path,
+    cfg_select_path,
+    cfg_io_path,
+    output_path,
+    prefix_event: str = "EVENT",
+    prefix_track: str = "TRACK",
+):
     """
     将一个未经处理的root文件，根据cfg_select.json里记录的筛选条件提取出有用的部分
 
@@ -177,15 +186,15 @@ def reduce_raw(input_path, tree_path, cfg_select_path, cfg_io_path, output_path)
     )
 
     # select event
-    mask_event = event_mask(tree, cfg_select, "EVENT")
+    mask_event = event_mask(tree, cfg_select, prefix_event)
     tree = select(tree, mask_event)
 
     # select tracks
-    mask_tracks = track_mask(tree, cfg_select, "TRACK")
-    tree = apply_track_mask_by_prefix(tree, mask_tracks, prefix="TRACK")
+    mask_tracks = track_mask(tree, cfg_select, prefix_track)
+    tree = apply_track_mask_by_prefix(tree, mask_tracks, prefix=prefix_track)
 
     # select event with at least two proton
-    tree = tree[ak.num(tree["TRACK_P"], axis=1) >= 2]
+    tree = tree[ak.num(tree[f"{prefix_track}_P"], axis=1) >= 2]
 
     # delete duplicate events
     tree = unique_event(tree)
@@ -195,3 +204,131 @@ def reduce_raw(input_path, tree_path, cfg_select_path, cfg_io_path, output_path)
     save_tree(tree, output_path)
 
     return tree
+
+
+def sort_tracks_by(
+    events: ak.Array,
+    key: str = "ETA_PHI_GHOST",
+    prefix: str = "TRACK",
+    ascending: bool = True,
+):
+    """
+    在每个 event 内，根据某一个 TRACK_* branch 排序，
+    并将排序顺序应用到所有同 prefix 的 branch 上。
+
+    1. sortby 1e6*ETA + 1e3*PHI + GhostProb, 一次性把eta和ghostprob排序完
+    2. 后续用roll tracks算一个和后一条的tracks的夹角
+    3. mask掉夹角<0.0005
+    """
+
+    if key not in events.fields:
+        raise KeyError(f"{key} not found in events")
+
+    order = ak.argsort(
+        events[key],
+        axis=1,
+        ascending=ascending,
+    )
+
+    out = events
+    for field in events.fields:
+        if field.startswith(prefix):
+            out = ak.with_field(
+                out,
+                events[field][order],
+                where=field,
+            )
+
+    return out
+
+
+def roll_tracks(
+    events: ak.Array,
+    prefix: str = "TRACK_",
+):
+    """
+    对每个 event 内的 TRACK_* jagged branch 做循环顺移：
+    [a, b, c] -> [c, a, b]
+
+    Parameters
+    ----------
+    events : ak.Array
+        输入 awkward array
+    prefix : str
+        需要操作的 branch 前缀
+
+    Returns
+    -------
+    ak.Array
+        顺移后的新 awkward array
+    """
+    out = events
+
+    for field in events.fields:
+        if not field.startswith(prefix):
+            continue
+
+        x = events[field]
+        n = ak.num(x, axis=1)
+
+        shifted = ak.where(
+            n > 1,
+            ak.concatenate([x[:, -1:], x[:, :-1]], axis=1),
+            x,
+        )
+
+        out = ak.with_field(
+            out,
+            shifted,
+            where=field,
+        )
+
+    return out
+
+
+def remove_clone_tracks(X, min_angle: float = 0.0005, prefix: str = "TRACK"):
+    """
+    去掉所有夹角小于0.0005的tracks，我们认为是clone tracks
+
+    parameters:
+    -----------
+    min_angle:
+        夹角小于这个值我们认为是clonetracks
+
+    prefix:
+        数据中的tracks以什么开头
+
+    Return:
+    -------
+    返回去掉clonetracks之后的数据
+    """
+    out = X
+    X = sort_tracks_by(X)
+    X1 = roll_tracks(X)
+
+    costheta = cos_theta_two_ak(X, X1)
+    for field in X.fields:
+        if field.startswith(prefix):
+            out = ak.with_field(
+                out,
+                X[field][costheta < np.cos(min_angle)],
+                where=field,
+            )
+
+    # 去掉clonetracks之后，仍然只保留至少有两条tracks的数据
+    out = out[ak.num(out[f"{prefix}_P"], axis=1) >= 2]
+
+    return out
+
+
+def remove_clone_tracks_N(X, min_angle: float = 0.0005, prefix: str = "TRACK"):
+    """
+    多次去除，防止极小概率情况有一些tracks的eta+phi插于两个clonetracks之间
+    """
+
+    while True:
+        old_num_tracks = ak.sum(ak.ones_like(X[f"{prefix}_P"]), axis=None)
+        X = remove_clone_tracks(X=X, min_angle=min_angle, prefix=prefix)
+        if ak.sum(ak.ones_like(X[f"{prefix}_P"]), axis=None) == old_num_tracks:
+            break
+    return X

@@ -2,7 +2,7 @@
     "EVENT": {
         "nPVs": [
             1,
-            1
+            1e9
         ]
     },
     "TRACK": {
@@ -21,6 +21,22 @@
         "TRACK_PIDp2K": [
             5,
             1e9
+        ],
+        "TRACK_CHARGE": [
+            1,
+            1
+        ],
+        "TRACK_IP_OWNPV": [
+            0,
+            1
+        ],
+        "TRACK_IPCHI2_OWNPV": [
+            0,
+            9
+        ],
+        "TRACK_Z_to_PARTICLE_Z": [
+            0,
+            0.1
         ]
     }
 }

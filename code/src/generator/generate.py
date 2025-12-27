@@ -1,6 +1,7 @@
 import os
 import awkward as ak
 
+from selector import *
 from kinematic import *
 from combinator import *
 
@@ -13,6 +14,7 @@ def generate(
     mixing_time: int = 20,
     m1: float = 938.272,
     m2: float = 938.272,
+    min_angle: float = 0.0005,
 ):
     """
     计算 same-event 与 mixed-event 的两体关联量（k*、cosθ）。
@@ -36,6 +38,8 @@ def generate(
         mixed-event k* 的输出目录（每次 mixing 一个文件）
     mixing_time : int, default 21
         event mixing 的次数（对应不同 shift）
+    min_angle:
+        最小容忍夹角，小于此值认为是clonetracks
 
     Notes
     -----
@@ -46,6 +50,9 @@ def generate(
     # ---------- input ----------
     input_path = os.path.join(input_dir, "*.parquet")
     X = ak.from_parquet(input_path)
+
+    # ------- remove clone tracks --------
+    X = remove_clone_tracks_N(X=X, min_angle=min_angle)
 
     # ---------- ensure output dirs ----------
     os.makedirs(os.path.dirname(output_same_kstar), exist_ok=True)

@@ -9,7 +9,7 @@ def run_one(args):
     """
     Worker：处理一个 reduced 子目录
     """
-    name, base_input_dir, base_output_dir, m1, m2, mixing_time = args
+    name, base_input_dir, base_output_dir, m1, m2, mixing_time, min_angle = args
 
     input_dir = os.path.join(base_input_dir, name)
 
@@ -29,6 +29,7 @@ def run_one(args):
         mixing_time=mixing_time,
         m1=m1,
         m2=m2,
+        min_angle=min_angle,
     )
 
 
@@ -39,6 +40,7 @@ def main():
     m1 = cfg_io.kstar_info.m1
     m2 = cfg_io.kstar_info.m2
     mixing_time = cfg_io.kstar_info.mixing_time
+    min_angle = cfg_io.kstar_info.angle_threshold
 
     subdirs = sorted(
         d
@@ -49,7 +51,8 @@ def main():
     nproc = min(len(subdirs), cfg_io.data.numCPU)
 
     tasks = [
-        (name, base_input_dir, base_output_dir, m1, m2, mixing_time) for name in subdirs
+        (name, base_input_dir, base_output_dir, m1, m2, mixing_time, min_angle)
+        for name in subdirs
     ]
 
     with Pool(processes=nproc) as pool:

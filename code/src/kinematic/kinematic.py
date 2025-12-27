@@ -1,4 +1,14 @@
+import numpy as np
 import awkward as ak
+
+"""
+注意，使用这里的计算公式前，先阅读combinator，搞清楚combinator里如何搞定：
+1. 相同event里的tracks的两两配对
+2. mix event里的tracks的两两配对
+3. zip的时候改了key name，所以这里写的pxpypz，原数据里并没有，不要误解
+
+并搞清楚为什么这两者出来的pair，为什么都可以用于这里的函数
+"""
 
 
 def norm(v):
@@ -94,3 +104,27 @@ def kstar(pairs, m1: float = 938.272, m2: float = 938.272):
     k = ((w**2 - m1**2 * m2**2) / (2.0 * w + m1**2 + m2**2)) ** 0.5
 
     return k
+
+
+def cos_theta_two_ak(
+    x1,
+    x2,
+    px: str = "TRACK_PX",
+    py: str = "TRACK_PY",
+    pz: str = "TRACK_PZ",
+):
+    """
+    额外的一个函数，专门用于计算非“组合配对”的，相同形状的两个ak的每一条tracks的函数
+    主要是为了算x和roll_tracks(x)的，
+    因为去除clonetracks有一个更简单的办法：
+    1. Clonetracks只发生在两个相近的tracks中，所以不需要两两配对计算所有夹角组合
+    2. 取而代之，我们可以先sort ETA，如果ETA都不相邻，那不可能是tracks
+    3. 所以去阅读roll_tracks和sort_tracks_by这两个函数
+
+    """
+    x1 = ak.values_astype(x1, np.float64)
+    x2 = ak.values_astype(x2, np.float64)
+    x1x2 = x1[px] * x2[px] + x1[py] * x2[py] + x1[pz] * x2[pz]
+    normx1 = (x1[px] * x1[px] + x1[py] * x1[py] + x1[pz] * x1[pz]) ** 0.5
+    normx2 = (x2[px] * x2[px] + x2[py] * x2[py] + x2[pz] * x2[pz]) ** 0.5
+    return x1x2 / normx1 / normx2

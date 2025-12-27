@@ -4,7 +4,6 @@
             "TRACK_RHO",
             "TRACK_NVPHITS",
             "TRACK_NUTHITS",
-            "TRACK_ETA",
             "TRACK_BEAMPOCA_X",
             "TRACK_BEAMPOCA_Y",
             "TRACK_BEAMPOCA_Z",
@@ -34,6 +33,7 @@
     "kstar_info": {
         "m1": 938.272,
         "m2": 938.272,
-        "mixing_time": 20
+        "mixing_time": 20,
+        "angle_threshold": 0.0005
     }
 }
