@@ -15,6 +15,8 @@ def generate(
     m1: float = 938.272,
     m2: float = 938.272,
     min_angle: float = 0.0005,
+    keep: int=5,
+    check_range: int=4,
     mother: str = "D0",
 ):
     """
@@ -53,7 +55,7 @@ def generate(
     X = ak.from_parquet(input_path)
 
     # ------- remove clone tracks --------
-    X = remove_clone_tracks_N(X=X, min_angle=min_angle)
+    X = remove_clone_tracks(X=X, min_angle=min_angle, keep=keep, check_range=check_range)
 
     # ---------- ensure output dirs ----------
     os.makedirs(os.path.dirname(output_same_kstar), exist_ok=True)

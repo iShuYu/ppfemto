@@ -245,38 +245,39 @@ def sort_tracks_by(
 
 def roll_tracks(
     events: ak.Array,
-    prefix: str = "TRACK_",
-):
+    keep: int = 5,
+    n: int = 1,
+    prefix: str = "TRACK",
+): 
     """
-    对每个 event 内的 TRACK_* jagged branch 做循环顺移：
-    [a, b, c] -> [c, a, b]
+    对每个 event 内的 TRACK_* jagged branch 做右移 n 位，
+
+    [a, b, c, d] (n=2) -> [c, d, a, b]
 
     Parameters
     ----------
     events : ak.Array
         输入 awkward array
+    keep : int
+        event 至少需要的 track 数
+    n : int
+        右移位数
     prefix : str
         需要操作的 branch 前缀
-
-    Returns
-    -------
-    ak.Array
-        顺移后的新 awkward array
     """
+
+    events = events[ak.num(events[f"{prefix}_P"], axis=1)>=keep]
     out = events
+
+    if n == 0:
+        return out
 
     for field in events.fields:
         if not field.startswith(prefix):
             continue
 
         x = events[field]
-        n = ak.num(x, axis=1)
-
-        shifted = ak.where(
-            n > 1,
-            ak.concatenate([x[:, -1:], x[:, :-1]], axis=1),
-            x,
-        )
+        shifted = ak.concatenate([x[:, -n:], x[:, :-n]], axis=1)
 
         out = ak.with_field(
             out,
@@ -287,7 +288,7 @@ def roll_tracks(
     return out
 
 
-def remove_clone_tracks(X, min_angle: float = 0.0005, prefix: str = "TRACK"):
+def remove_clone_tracks(X, keep:int=3, check_range: int=2, min_angle: float = 0.0005, prefix: str = "TRACK"):
     """
     去掉所有夹角小于0.0005的tracks，我们认为是clone tracks
 
@@ -296,6 +297,13 @@ def remove_clone_tracks(X, min_angle: float = 0.0005, prefix: str = "TRACK"):
     min_angle:
         夹角小于这个值我们认为是clonetracks
 
+    keep: 
+        保留至少多少条数据的events
+
+    check_range:
+        若为1，则只检查相空间+ghostprob排序后的相邻两条，
+        若为2，则既检查相邻，又检查隔位
+
     prefix:
         数据中的tracks以什么开头
 
@@ -303,33 +311,29 @@ def remove_clone_tracks(X, min_angle: float = 0.0005, prefix: str = "TRACK"):
     -------
     返回去掉clonetracks之后的数据
     """
-    out = X
+    
     X = sort_tracks_by(X)
-    X1 = roll_tracks(X)
+    X0 = roll_tracks(X, keep=keep, n=0)
+    Xs = roll_tracks(X, keep=keep, n=1)
+    costheta = cos_theta_two_ak(X0, Xs)
+    anticrit = costheta >  np.cos(min_angle)
 
-    costheta = cos_theta_two_ak(X, X1)
+    for i in range(2, check_range+1):
+        Xs = roll_tracks(X, keep=keep, n=i)
+        costheta = cos_theta_two_ak(X0, Xs)
+        anticrit = anticrit | (costheta >  np.cos(min_angle))
+
+    out = X0    
     for field in X.fields:
         if field.startswith(prefix):
             out = ak.with_field(
                 out,
-                X[field][costheta < np.cos(min_angle)],
+                X0[field][~anticrit],
                 where=field,
             )
 
-    # 去掉clonetracks之后，仍然只保留至少有两条tracks的数据
-    out = out[ak.num(out[f"{prefix}_P"], axis=1) >= 2]
+    # 去掉clonetracks之后，仍然只保留至少有{keep}条tracks的数据
+    out = out[ak.num(out[f"{prefix}_P"], axis=1) >= keep]
 
     return out
 
-
-def remove_clone_tracks_N(X, min_angle: float = 0.0005, prefix: str = "TRACK"):
-    """
-    多次去除，防止极小概率情况有一些tracks的eta+phi插于两个clonetracks之间
-    """
-
-    while True:
-        old_num_tracks = ak.sum(ak.ones_like(X[f"{prefix}_P"]), axis=None)
-        X = remove_clone_tracks(X=X, min_angle=min_angle, prefix=prefix)
-        if ak.sum(ak.ones_like(X[f"{prefix}_P"]), axis=None) == old_num_tracks:
-            break
-    return X

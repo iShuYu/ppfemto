@@ -6,7 +6,6 @@ from .select import (
     sort_tracks_by,
     roll_tracks,
     remove_clone_tracks,
-    remove_clone_tracks_N,
 )
 
 __all__ = [
@@ -17,5 +16,4 @@ __all__ = [
     "sort_tracks_by",
     "roll_tracks",
     "remove_clone_tracks",
-    "remove_clone_tracks_N",
 ]
