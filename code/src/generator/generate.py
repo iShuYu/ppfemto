@@ -15,6 +15,7 @@ def generate(
     m1: float = 938.272,
     m2: float = 938.272,
     min_angle: float = 0.0005,
+    mother: str = "D0",
 ):
     """
     计算 same-event 与 mixed-event 的两体关联量（k*、cosθ）。
@@ -69,7 +70,7 @@ def generate(
 
     # ---------- mixed-event ----------
     for i in range(1, mixing_time + 1):
-        mixing_pair = gen_mixed_pair(X, shuffle=i)
+        mixing_pair = gen_mixed_pair(X, shuffle=i, mother=mother)
         kstar_mix = kstar(mixing_pair, m1=m1, m2=m2)
         cos_angle_mix = cos_theta(mixing_pair)
 

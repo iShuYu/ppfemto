@@ -25,6 +25,7 @@
             "/st0/lhcb/wangjq/raw_data/charm_h_magup25c3",
             "/st0/lhcb/wangjq/raw_data/charm_h_magup25c4"
         ],
+        "mother": "D0",
         "tree_path": "D02kpi/DecayTree",
         "reduced_path": "/st0/lhcb/kangye/ppfemto/reduced",
         "output_dir": "/st0/lhcb/kangye/ppfemto/kstar",

@@ -12,6 +12,8 @@ def load_tree(
     select_branch: str | list[str] | None = None,
     exclude_branch: str | list[str] | None = None,
     only_scalar: bool = False,
+    mother: str = "D0",
+    add_branch_flag: bool=True,
 ) -> ak.Array:
     """
     从 ROOT 文件读取指定 tree，支持自动筛选单值 scalar branches。
@@ -63,7 +65,8 @@ def load_tree(
         selected -= set(exclude_branch)
 
     tree = tree.arrays(list(selected), library="ak")
-    tree = add_branch(tree=tree)
+    if add_branch_flag:
+        tree = add_branch(tree=tree, mother=mother)
     return tree
 
 
@@ -83,8 +86,8 @@ def add_branch(tree: ak.Array, mother: str = "D0") -> ak.Array:
     if "TRACK_PIDp2K" not in tree.fields:
         tree["TRACK_PIDp2K"] = tree["TRACK_PIDp"] - tree["TRACK_PIDK"]
 
-    if "ETA_PHI_GHOST" not in tree.fields:
-        tree["ETA_PHI_GHOST"] = (
+    if "TRACK_ETA_PHI_GHOST" not in tree.fields:
+        tree["TRACK_ETA_PHI_GHOST"] = (
             1e6 * tree["TRACK_ETA"]
             + 1e6 * abs(tree["TRACK_PHI"])
             + tree["TRACK_GHOSTPROB"]

@@ -34,7 +34,7 @@ def gen_pair(X, field_map=None):
     return pair
 
 
-def shuffle_events(X, shuffle: int = 1):
+def shuffle_events(X, shuffle: int = 1, mother: str = "D0"):
     """
     按 (PVZ, nLongTracks) 排序后整体顺移一格
 
@@ -49,7 +49,7 @@ def shuffle_events(X, shuffle: int = 1):
     以用于后续的mixing，成为一个mixing pair
     """
 
-    pvz = ak.to_numpy(ak.flatten(X["PVZ"]))
+    pvz = ak.to_numpy(X[f"{mother}_OWNPV_Z"])
     ntrk = ak.to_numpy(X["nLongTracks"])
 
     order = np.lexsort((ntrk, pvz))
@@ -64,7 +64,7 @@ def shuffle_events(X, shuffle: int = 1):
     return X_sorted, X_shifted
 
 
-def gen_mixed_pair(X, field_map: dict = None, shuffle: int = 1):
+def gen_mixed_pair(X, field_map: dict = None, shuffle: int = 1, mother: str = "D0"):
     """
     对event进行mix，再将event i和event j的tracks进行cartesian product
 
@@ -87,7 +87,7 @@ def gen_mixed_pair(X, field_map: dict = None, shuffle: int = 1):
             "py": "TRACK_PY",
             "pz": "TRACK_PZ",
         }
-    X_sort, X_shuffle = shuffle_events(X, shuffle=shuffle)
+    X_sort, X_shuffle = shuffle_events(X, shuffle=shuffle, mother=mother)
 
     a = ak.zip(
         {k: X_sort[v] for k, v in field_map.items()},

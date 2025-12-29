@@ -183,6 +183,7 @@ def reduce_raw(
         root_path=input_path,
         tree_path=tree_path,
         exclude_branch=cfg_io.data.exclude_branch,
+        mother=cfg_io.data.mother,
     )
 
     # select event
@@ -208,7 +209,7 @@ def reduce_raw(
 
 def sort_tracks_by(
     events: ak.Array,
-    key: str = "ETA_PHI_GHOST",
+    key: str = "TRACK_ETA_PHI_GHOST",
     prefix: str = "TRACK",
     ascending: bool = True,
 ):
@@ -216,7 +217,7 @@ def sort_tracks_by(
     在每个 event 内，根据某一个 TRACK_* branch 排序，
     并将排序顺序应用到所有同 prefix 的 branch 上。
 
-    1. sortby 1e6*ETA + 1e3*PHI + GhostProb, 一次性把eta和ghostprob排序完
+    1. sortby 1e6*ETA + 1e6*PHI + GhostProb, 一次性把eta和ghostprob排序完
     2. 后续用roll tracks算一个和后一条的tracks的夹角
     3. mask掉夹角<0.0005
     """

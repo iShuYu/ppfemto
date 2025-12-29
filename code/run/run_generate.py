@@ -9,7 +9,7 @@ def run_one(args):
     """
     Worker：处理一个 reduced 子目录
     """
-    name, base_input_dir, base_output_dir, m1, m2, mixing_time, min_angle = args
+    name, base_input_dir, base_output_dir, m1, m2, mixing_time, min_angle, mother = args
 
     input_dir = os.path.join(base_input_dir, name)
 
@@ -30,6 +30,7 @@ def run_one(args):
         m1=m1,
         m2=m2,
         min_angle=min_angle,
+        mother=mother,
     )
 
 
@@ -37,6 +38,7 @@ def main():
     cfg_io = load_config("/nishome/kangye/ppfemto/code/cfg/config_io.json")
     base_input_dir = cfg_io.data.reduced_path
     base_output_dir = cfg_io.data.output_dir
+    mother = cfg_io.data.mother
     m1 = cfg_io.kstar_info.m1
     m2 = cfg_io.kstar_info.m2
     mixing_time = cfg_io.kstar_info.mixing_time
@@ -51,7 +53,7 @@ def main():
     nproc = min(len(subdirs), cfg_io.data.numCPU)
 
     tasks = [
-        (name, base_input_dir, base_output_dir, m1, m2, mixing_time, min_angle)
+        (name, base_input_dir, base_output_dir, m1, m2, mixing_time, min_angle, mother)
         for name in subdirs
     ]
 

@@ -112,6 +112,9 @@ def cos_theta_two_ak(
     px: str = "TRACK_PX",
     py: str = "TRACK_PY",
     pz: str = "TRACK_PZ",
+    px2: str = "TRACK_PX",
+    py2: str = "TRACK_PY",
+    pz2: str = "TRACK_PZ",
 ):
     """
     额外的一个函数，专门用于计算非“组合配对”的，相同形状的两个ak的每一条tracks的函数
@@ -124,7 +127,7 @@ def cos_theta_two_ak(
     """
     x1 = ak.values_astype(x1, np.float64)
     x2 = ak.values_astype(x2, np.float64)
-    x1x2 = x1[px] * x2[px] + x1[py] * x2[py] + x1[pz] * x2[pz]
+    x1x2 = x1[px] * x2[px2] + x1[py] * x2[py2] + x1[pz] * x2[pz2]
     normx1 = (x1[px] * x1[px] + x1[py] * x1[py] + x1[pz] * x1[pz]) ** 0.5
-    normx2 = (x2[px] * x2[px] + x2[py] * x2[py] + x2[pz] * x2[pz]) ** 0.5
+    normx2 = (x2[px2] * x2[px2] + x2[py2] * x2[py2] + x2[pz2] * x2[pz2]) ** 0.5
     return x1x2 / normx1 / normx2
