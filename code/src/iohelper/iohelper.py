@@ -86,12 +86,18 @@ def add_branch(tree: ak.Array, mother: str = "D0") -> ak.Array:
     if "TRACK_PIDp2K" not in tree.fields:
         tree["TRACK_PIDp2K"] = tree["TRACK_PIDp"] - tree["TRACK_PIDK"]
 
-    if "TRACK_ETA_PHI_GHOST" not in tree.fields:
-        tree["TRACK_ETA_PHI_GHOST"] = (
+    if "TRACK_ETA_GHOST" not in tree.fields:
+        tree["TRACK_ETA_GHOST"] = (
             1e6 * tree["TRACK_ETA"]
-            + 1e6 * abs(tree["TRACK_PHI"])
             + tree["TRACK_GHOSTPROB"]
         )
+    
+    if "TRACK_PHI_GHOST" not in tree.fields:
+        tree["TRACK_PHI_GHOST"] = (
+            1e6 * abs(tree["TRACK_PHI"])
+            + tree["TRACK_GHOSTPROB"]
+        )
+
 
     # PVNTRACKS这个变量需要自己构建，故 or True
     if ("PVNTRACKS" not in tree.fields) or True:

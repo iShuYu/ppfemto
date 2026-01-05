@@ -15,9 +15,9 @@ def generate(
     m1: float = 938.272,
     m2: float = 938.272,
     min_angle: float = 0.0005,
-    keep: int=5,
-    check_range: int=4,
     mother: str = "D0",
+    bys:list[str] = ["TRACK_ETA_GHOST", "TRACK_PHI_GHOST"],
+    prefix: str="TRACK",
 ):
     """
     计算 same-event 与 mixed-event 的两体关联量（k*、cosθ）。
@@ -55,7 +55,7 @@ def generate(
     X = ak.from_parquet(input_path)
 
     # ------- remove clone tracks --------
-    X = remove_clone_tracks(X=X, min_angle=min_angle, keep=keep, check_range=check_range)
+    X = remove_clone_tracks(X=X, bys=bys, min_angle=min_angle, prefix=prefix)
 
     # ---------- ensure output dirs ----------
     os.makedirs(os.path.dirname(output_same_kstar), exist_ok=True)
